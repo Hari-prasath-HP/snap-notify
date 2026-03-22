@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Organization {
+  id            String         @id @default(uuid())
+  name          String
+  logoUrl       String?
+  address       String?
+  phone         String?
+  adminId       String         @unique
+  createdAt     DateTime       @default(now())
+  images        Image[]
+  notifications Notification[]
+  admin         User           @relation("OrgAdmin", fields: [adminId], references: [id])
+  payments      Payment[]
+  users         User[]
+}
+
+model User {
+  id                String             @id @default(uuid())
+  name              String
+  email             String             @unique
+  password          String?
+  role              Role
+  organizationId    String?
+  imageQuota        Int                @default(5)
+  createdAt         DateTime           @default(now())
+  images            Image[]
+  sentNotifications Notification[]     @relation("Sender")
+  orgAdmin          Organization?      @relation("OrgAdmin")
+  payments          Payment[]
+  organization      Organization?      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  pushSubscriptions PushSubscription[]
+}
+
+model Image {
+  id             String       @id @default(uuid())
+  url            String
+  uploadedBy     String
+  organizationId String
+  tags           String[]
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  user           User         @relation(fields: [uploadedBy], references: [id])
+}
+
+model Payment {
+  id             String        @id @default(uuid())
+  userId         String
+  organizationId String
+  amount         Int
+  slotsPurchased Int
+  transactionId  String?       @unique
+  status         PaymentStatus
+  createdAt      DateTime      @default(now())
+  organization   Organization  @relation(fields: [organizationId], references: [id])
+  user           User          @relation(fields: [userId], references: [id])
+}
+
+model Notification {
+  id             String       @id @default(uuid())
+  organizationId String
+  senderId       String
+  receiverIds    String[]
+  message        String
+  imageId        String?
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  sender         User         @relation("Sender", fields: [senderId], references: [id])
+}
+
+enum Role {
+  product_owner
+  admin
+  user
+}
+
+enum PaymentStatus {
+  pending
+  success
+  failed
+}
+
+model PushSubscription {
+  id        String   @id @default(uuid())
+  userId    String
+  endpoint  String
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
