@@ -20,7 +20,13 @@ export async function POST(req: Request) {
 
   try {
     const result = await webpush.sendNotification(
-      subscription,
+      {
+        endpoint: subscription.endpoint,
+        keys: {
+          p256dh: subscription.p256dh,
+          auth: subscription.auth,
+        },
+      },
       JSON.stringify({ title, body })
     );
 

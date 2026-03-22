@@ -161,7 +161,7 @@ export async function POST(req: Request) {
 
             // ✅ HANDLE EXPIRED SUBSCRIPTION
             if (err.statusCode === 410 || err.statusCode === 404) {
-              await prisma.pushSubscription.delete({
+              await prisma.notification.delete({
                 where: { id: sub.id },
               });
 
